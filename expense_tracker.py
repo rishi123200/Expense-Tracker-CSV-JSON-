@@ -12,28 +12,93 @@ def initialize_file():
             writer.writerow(["Date", "Category", "Amount", "Description"])
 
 
+def get_valid_date():
+    while True:
+        date = input("Enter date (DD-MM-YYYY): ").strip()
+
+        if len(date) == 10 and date[2] == "-" and date[5] == "-":
+            day = date[:2]
+            month = date[3:5]
+            year = date[6:]
+
+            if day.isdigit() and month.isdigit() and year.isdigit():
+                day = int(day)
+                month = int(month)
+                year = int(year)
+
+                if 1 <= month <= 12:
+                    days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+                    if month == 2 and ((year % 400 == 0) or (year % 4 == 0 and year % 100 != 0)):
+                        max_day = 29
+                    else:
+                        max_day = days[month - 1]
+
+                    if 1 <= day <= max_day:
+                        return date
+
+        print("Invalid date. Please enter date in DD-MM-YYYY format.")
+
+
+def get_valid_amount():
+    while True:
+        amount = input("Enter amount: ₹").strip()
+
+        if amount.count(".") <= 1:
+            check_amount = amount.replace(".", "", 1)
+
+            if check_amount.isdigit() and amount != ".":
+                amount = float(amount)
+
+                if amount > 0:
+                    return amount
+
+        print("Invalid amount. Please enter a positive number.")
+
+
 def add_expense():
-    date = input("Enter date (DD-MM-YYYY): ")
-    category = input("Enter category: ")
-    amount = float(input("Enter amount: ₹"))
-    description = input("Enter description: ")
+    date = get_valid_date()
+
+    while True:
+        category = input("Enter category: ").strip()
+
+        if category:
+            break
+
+        print("Category cannot be empty.")
+
+    amount = get_valid_amount()
+
+    while True:
+        description = input("Enter description: ").strip()
+
+        if description:
+            break
+
+        print("Description cannot be empty.")
 
     with open(FILE_NAME, "a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([date, category, amount, description])
+        writer.writerow([date, category.title(), amount, description])
 
     print("Expense added successfully!")
 
 
 def view_expenses():
-    with open(FILE_NAME, "r") as file:
+    with open(FILE_NAME, "r", newline="") as file:
         reader = csv.DictReader(file)
+
+        rows = list(reader)
+
+        if not rows:
+            print("\nNo expenses found.")
+            return
 
         print("\n" + "=" * 75)
         print(f"{'Date':<15}{'Category':<15}{'Amount':<15}{'Description':<30}")
         print("=" * 75)
 
-        for row in reader:
+        for row in rows:
             print(
                 f"{row['Date']:<15}"
                 f"{row['Category']:<15}"
@@ -47,7 +112,7 @@ def view_expenses():
 def calculate_total():
     total = 0
 
-    with open(FILE_NAME, "r") as file:
+    with open(FILE_NAME, "r", newline="") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
@@ -59,7 +124,7 @@ def calculate_total():
 def category_summary():
     category_expenses = {}
 
-    with open(FILE_NAME, "r") as file:
+    with open(FILE_NAME, "r", newline="") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
@@ -71,6 +136,10 @@ def category_summary():
             else:
                 category_expenses[category] = amount
 
+    if not category_expenses:
+        print("\nNo expenses found.")
+        return
+
     print("\n========== CATEGORY SUMMARY ==========")
 
     for category, amount in category_expenses.items():
@@ -80,25 +149,30 @@ def category_summary():
 
 
 def search_by_category():
-    search_category = input("Enter category to search: ").lower()
+    search_category = input("Enter category to search: ").strip().lower()
 
-    with open(FILE_NAME, "r") as file:
+    if not search_category:
+        print("Category cannot be empty.")
+        return
+
+    found = False
+
+    with open(FILE_NAME, "r", newline="") as file:
         reader = csv.DictReader(file)
 
-        found = False
-
         for row in reader:
-            if row["Category"].lower() == search_category:
+            if row["Category"].strip().lower() == search_category:
                 found = True
+
                 print(
                     f"Date: {row['Date']} | "
                     f"Category: {row['Category']} | "
-                    f"Amount: ₹{row['Amount']} | "
+                    f"Amount: ₹{float(row['Amount']):.2f} | "
                     f"Description: {row['Description']}"
                 )
 
-        if not found:
-            print("No expenses found.")
+    if not found:
+        print("No expenses found.")
 
 
 def main():
@@ -116,7 +190,7 @@ def main():
         print("6. Exit")
         print("================================")
 
-        choice = input("Enter your choice: ")
+        choice = input("Enter your choice: ").strip()
 
         if choice == "1":
             add_expense()
@@ -138,7 +212,8 @@ def main():
             break
 
         else:
-            print("Invalid choice.")
+            print("Invalid choice. Please enter a number from 1 to 6.")
 
 
-main()
+if __name__ == "__main__":
+    main()
