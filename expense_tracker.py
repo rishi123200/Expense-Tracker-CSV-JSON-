@@ -16,12 +16,12 @@ def add_expense():
         "amount": amount
     }
 
-    # Save to CSV
+    # CSV
     with open(CSV_FILE, "a", newline="") as file:
         writer = csv.writer(file)
         writer.writerow([date, category, amount])
 
-    # Save to JSON
+    # JSON
     expenses = []
     if os.path.exists(JSON_FILE):
         with open(JSON_FILE, "r") as file:
